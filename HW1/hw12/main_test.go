@@ -131,18 +131,43 @@ func TestRpnEval(t *testing.T) {
 	}
 }
 
-func TestInfEval(t *testing.T) {
-	expr := "((1+5)*6)/4\n"
-	expectedRes := 9.0
+func TestUnaryEval(t *testing.T) {
+	expr := "-4\n"
+	expectedRes := -4.0
 
 	res := evalInf(expr)
 
 	if res != expectedRes {
 		t.Errorf(
-			"Wrong evaluation of %s, wanted %f, got %f",
+			"Wrong evaluation of unary minus (%s), wanted %f, got %f",
 			expr,
 			expectedRes,
 			res,
 		)
+	}
+}
+
+func TestInfEval(t *testing.T) {
+	exprs := []string{
+		"((1+5)*6)/4\n",
+		"3 + 1 / (-4 * (-1/2)) - 4\n",
+	}
+	// expr := "((1+5)*6)/4\n"
+	expectedResults := []float64{
+		9.0,
+		-0.5,
+	}
+
+	for idx, expr := range exprs {
+		res := evalInf(expr)
+		
+		if res != expectedResults[idx] {
+			t.Errorf(
+				"Wrong evaluation of %s, wanted %f, got %f",
+				expr,
+				expectedResults[idx],
+				res,
+			)
+		}
 	}
 }

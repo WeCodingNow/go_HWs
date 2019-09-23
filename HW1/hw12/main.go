@@ -10,6 +10,7 @@ import (
 type Token struct {
 	IsOp	bool
 	Op		byte
+	Unary 	bool
 	Val		float64
 }
 
@@ -33,11 +34,11 @@ func parseTokens(str string) []Token {
 		}
 
 		if isOneOf(rune(str[i]), "+-*/()") {
-			retSl = append(retSl, Token{
-				IsOp: true,
-				Op: str[i],
-				Val: 0,
-			})
+				retSl = append(retSl, Token{
+					IsOp: true,
+					Op: str[i],
+					Val: 0,
+				})
 		} else {
 			numberEnd := 0
 
@@ -79,14 +80,19 @@ func toRpn(tokens []Token) []Token {
 		'-':	0,
 		'*':	1,
 		'/':	1,
+		'u':	2,
 	}
 
 	outStack := make([]Token, 0)
 	opStack := make([]Token, 0)
 
+	unary := true
+
 	for _, t := range tokens {
 		if !t.IsOp {
 			outStack = push(outStack, t)
+			unary = false
+
 		} else {
 			if t.Op == '(' {
 				opStack = push(opStack, t)
@@ -111,14 +117,28 @@ func toRpn(tokens []Token) []Token {
 					if top.Op == '(' {
 						break
 					} else if isOneOf(rune(top.Op), "+-/*") {
-						if precedence[top.Op] < precedence[t.Op] {
+						precedTop := precedence[top.Op]
+						preced := precedence[t.Op]
+
+						if top.Unary {
+							precedTop = precedence['u']
+						}
+
+						if t.Unary {
+							preced = precedence['u']
+						}
+
+						if precedTop < preced {
 							break
 						}
 					}
 					outStack = push(outStack, top)
 					_, opStack = pop(opStack)
 				}
+
+				t.Unary = unary
 				opStack = append(opStack, t)
+				unary = true
 			}
 		}
 	}
@@ -135,10 +155,19 @@ func evalRpn(tokens []Token) float64 {
 
 	for _, t := range tokens {
 		if t.IsOp {
-			lhs := stack[len(stack) - 2]
-			rhs := stack[len(stack) - 1]
+			var lhs, rhs float64
 
-			stack = stack[:len(stack) - 2]
+			if t.Unary {
+				lhs = 0
+				rhs = stack[len(stack) - 1]
+				
+				stack = stack[:len(stack) - 1]
+			} else {
+				lhs = stack[len(stack) - 2]
+				rhs = stack[len(stack) - 1]
+
+				stack = stack[:len(stack) - 2]
+			}
 
 			switch t.Op {
 				case '+':
