@@ -27,6 +27,8 @@ func isOneOf(in rune, out string) bool {
 func parseTokens(str string) []Token {
 	retSl := make([]Token, 0)
 
+	unary := true
+
 	for i := 0; i < len(str); i++ {
 
 		if isOneOf(rune(str[i]), " \n") {
@@ -34,11 +36,23 @@ func parseTokens(str string) []Token {
 		}
 
 		if isOneOf(rune(str[i]), "+-*/()") {
-				retSl = append(retSl, Token{
-					IsOp: true,
-					Op: str[i],
-					Val: 0,
-				})
+			newToken := Token{
+				IsOp: true,
+				Op: str[i],
+				Val: 0,
+			}
+
+			if newToken.Op == '-' {
+				newToken.Unary = unary
+			}
+
+			retSl = append(retSl, newToken)
+
+			unary = true
+			if newToken.Op == ')' {
+				unary = false
+			}
+
 		} else {
 			numberEnd := 0
 
@@ -58,6 +72,8 @@ func parseTokens(str string) []Token {
 			})
 
 			i += numberEnd - 1
+
+			unary = false
 		}
 	}
 
@@ -86,13 +102,9 @@ func toRpn(tokens []Token) []Token {
 	outStack := make([]Token, 0)
 	opStack := make([]Token, 0)
 
-	unary := true
-
 	for _, t := range tokens {
 		if !t.IsOp {
 			outStack = push(outStack, t)
-			unary = false
-
 		} else {
 			if t.Op == '(' {
 				opStack = push(opStack, t)
@@ -121,11 +133,11 @@ func toRpn(tokens []Token) []Token {
 						preced := precedence[t.Op]
 
 						if top.Unary {
-							precedTop = precedence['u']
+							break
 						}
 
 						if t.Unary {
-							preced = precedence['u']
+							break
 						}
 
 						if precedTop < preced {
@@ -136,9 +148,7 @@ func toRpn(tokens []Token) []Token {
 					_, opStack = pop(opStack)
 				}
 
-				t.Unary = unary
-				opStack = append(opStack, t)
-				unary = true
+				opStack = push(opStack, t)
 			}
 		}
 	}
