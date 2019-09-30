@@ -93,9 +93,7 @@ func oneMultiHash(src string) string {
 func MultiHash(in, out chan interface{}) {
 	var wg = &sync.WaitGroup{}
 
-	i := 0
 	for data := range in {
-		i++
 		d := data.(string)
 		wg.Add(1)
 
