@@ -35,9 +35,7 @@ func evalMd5(data string) string {
 	mu.Lock()
 	defer mu.Unlock()
 
-	retVal := DataSignerMd5(data)
-
-	return retVal
+	return DataSignerMd5(data)
 }
 
 func oneSingleHash(data string) string {
