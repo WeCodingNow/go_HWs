@@ -38,7 +38,7 @@ func evalMd5(data string) string {
 }
 
 func oneSingleHash(data string) string {
-	var wg sync.WaitGroup
+	var wg = &sync.WaitGroup{}
 	var left string
 	var right string
 
@@ -47,19 +47,19 @@ func oneSingleHash(data string) string {
 	go func(wg *sync.WaitGroup){
 		left = DataSignerCrc32(data)
 		wg.Done()
-	}(&wg)
+	}(wg)
 
 	go func(wg *sync.WaitGroup){
 		right = DataSignerCrc32(evalMd5(data))
 		wg.Done()
-	}(&wg)
+	}(wg)
 
 	wg.Wait()
 	return left + "~" + right
 }
 
 func SingleHash(in, out chan interface{}) {
-	var wg sync.WaitGroup
+	var wg = &sync.WaitGroup{}
 
 	for data := range in {
 		d := strconv.Itoa(data.(int))
@@ -69,14 +69,14 @@ func SingleHash(in, out chan interface{}) {
 		go func(wg *sync.WaitGroup){
 			out <- oneSingleHash(d)
 			wg.Done()
-		}(&wg)
+		}(wg)
 	}
 
 	wg.Wait()
 }
 
 func oneMultiHash(src string) string {
-	var wg sync.WaitGroup
+	var wg = &sync.WaitGroup{}
 
 	crcs := make([]string, multiHashesN)
 
@@ -87,7 +87,7 @@ func oneMultiHash(src string) string {
 			hashSrc := strconv.Itoa(crcIdx) + src
 			crcs[crcIdx] = DataSignerCrc32(hashSrc)
 			wg.Done()
-		}(i, &wg)
+		}(i, wg)
 	}
 
 	wg.Wait()
@@ -97,7 +97,7 @@ func oneMultiHash(src string) string {
 }
 
 func MultiHash(in, out chan interface{}) {
-	var wg sync.WaitGroup
+	var wg = &sync.WaitGroup{}
 
 	i := 0
 	for data := range in {
@@ -108,7 +108,7 @@ func MultiHash(in, out chan interface{}) {
 		go func(wg *sync.WaitGroup) {
 			out <- oneMultiHash(d)
 			wg.Done()
-		}(&wg)
+		}(wg)
 	}
 
 	wg.Wait()
