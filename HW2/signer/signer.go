@@ -15,13 +15,13 @@ const (
 func ExecutePipeline(jobs... job) {
 	prevOut := make(chan interface{}, maxElems)
 
-	for idx, j := range jobs {
+	for _, j := range jobs {
 		out := make(chan interface{}, maxElems)
 
-		go func(idx int, j job, in, out chan interface{}){
+		go func(j job, in, out chan interface{}){
 			j(in, out)
 			close(out)
-		}(idx, j, prevOut, out)
+		}(j, prevOut, out)
 
 		prevOut = out
 	}
