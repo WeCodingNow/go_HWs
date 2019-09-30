@@ -8,15 +8,11 @@ import (
 )
 
 
-const (
-	maxElems = 100
-)
-
 func ExecutePipeline(jobs... job) {
-	prevOut := make(chan interface{}, maxElems)
+	prevOut := make(chan interface{})
 
 	for _, j := range jobs {
-		out := make(chan interface{}, maxElems)
+		out := make(chan interface{})
 
 		go func(j job, in, out chan interface{}){
 			j(in, out)
