@@ -7,6 +7,9 @@ import (
 	"sync"
 )
 
+const (
+	multiHashesN = 6
+)
 
 func ExecutePipeline(jobs... job) {
 	prevOut := make(chan interface{})
@@ -75,9 +78,9 @@ func SingleHash(in, out chan interface{}) {
 func oneMultiHash(src string) string {
 	var wg sync.WaitGroup
 
-	crcs := make([]string, 6)
+	crcs := make([]string, multiHashesN)
 
-	for i := 0; i < 6; i++ {
+	for i := 0; i < multiHashesN; i++ {
 		wg.Add(1)
 
 		go func(crcIdx int, wg *sync.WaitGroup){
