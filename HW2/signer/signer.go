@@ -38,24 +38,18 @@ func evalMd5(data string) string {
 }
 
 func oneSingleHash(data string) string {
-	var wg = &sync.WaitGroup{}
-	var left string
-	var right string
+	leftCh := make(chan string)
+	rightCh := make(chan string)
 
-	wg.Add(2)
+	go func(){
+		leftCh <- DataSignerCrc32(data)
+	}()
 
-	go func(wg *sync.WaitGroup){
-		left = DataSignerCrc32(data)
-		wg.Done()
-	}(wg)
+	go func(){
+		rightCh <- DataSignerCrc32(evalMd5(data))
+	}()
 
-	go func(wg *sync.WaitGroup){
-		right = DataSignerCrc32(evalMd5(data))
-		wg.Done()
-	}(wg)
-
-	wg.Wait()
-	return left + "~" + right
+	return <-leftCh + "~" + <-rightCh
 }
 
 func SingleHash(in, out chan interface{}) {
