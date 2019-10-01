@@ -28,9 +28,7 @@ func parseTokens(str string) []Token {
 	retSl := make([]Token, 0)
 
 	unary := true
-
 	for i := 0; i < len(str); i++ {
-
 		if isOneOf(rune(str[i]), " \n") {
 			continue
 		}
@@ -89,68 +87,12 @@ func push(stack []Token, elem Token) []Token {
 	return append(stack, elem)
 }
 
-// shunting yard algo
 func toRpn(tokens []Token) []Token {
-	var precedence map[byte]int = map[byte]int{
-		'+':	0,
-		'-':	0,
-		'*':	1,
-		'/':	1,
-		'u':	2,
-	}
-
 	outStack := make([]Token, 0)
 	opStack := make([]Token, 0)
 
 	for _, t := range tokens {
-		if !t.IsOp {
-			outStack = push(outStack, t)
-		} else {
-			if t.Op == '(' {
-				opStack = push(opStack, t)
-			} else if t.Op == ')' {
-				for {
-					var top Token
-					top, _ = pop(opStack)
-
-					if top.Op != '(' {
-						outStack = push(outStack, top)
-					} else {
-						_, opStack = pop(opStack)
-						break
-					}
-
-					_, opStack = pop(opStack)
-				}
-			} else {
-				for len(opStack) != 0 {
-					top, _ := pop(opStack)
-
-					if top.Op == '(' {
-						break
-					} else if isOneOf(rune(top.Op), "+-/*") {
-						precedTop := precedence[top.Op]
-						preced := precedence[t.Op]
-
-						if top.Unary {
-							break
-						}
-
-						if t.Unary {
-							break
-						}
-
-						if precedTop < preced {
-							break
-						}
-					}
-					outStack = push(outStack, top)
-					_, opStack = pop(opStack)
-				}
-
-				opStack = push(opStack, t)
-			}
-		}
+		pushToken(t, &opStack, &outStack)
 	}
 
 	for i := len(opStack) - 1; i != -1; i-- {
@@ -158,6 +100,57 @@ func toRpn(tokens []Token) []Token {
 	}
 
 	return outStack
+}
+
+func pushToken(t Token, opStack, outStack *[]Token) {
+		switch {
+			case !t.IsOp:
+				*outStack = push(*outStack, t)
+			
+			case t.Op == '(':
+				*opStack = push(*opStack, t)
+			
+			case t.Op == ')':
+				for {
+					var top Token
+					top, _ = pop(*opStack)
+					
+					if top.Op != '(' {
+						*outStack = push(*outStack, top)
+						} else {
+							_, *opStack = pop(*opStack)
+							break
+						}
+						
+						_, *opStack = pop(*opStack)
+				}
+			default:
+				for len(*opStack) != 0 {
+					top, _ := pop(*opStack)
+					
+					precedTop := precedence[top.Op]
+					preced := precedence[t.Op]
+
+					if	top.Op == '(' 		||
+						top.Unary 			||
+						t.Unary 			||
+						precedTop < preced 	{
+						break
+					}
+							
+					*outStack = push(*outStack, top)
+					_, *opStack = pop(*opStack)
+				}
+				*opStack = push(*opStack, t)
+		}
+}
+
+var precedence map[byte]int = map[byte]int{
+	'+':	0,
+	'-':	0,
+	'*':	1,
+	'/':	1,
+	'u':	2,
 }
 
 func evalRpn(tokens []Token) float64 {
